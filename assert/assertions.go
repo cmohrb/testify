@@ -51,26 +51,63 @@ type Comparison func() (success bool)
 */
 
 // ObjectsAreEqual determines if two objects are considered equal.
-//
-// This function does no assertion of any kind.
 func ObjectsAreEqual(expected, actual interface{}) bool {
 	if expected == nil || actual == nil {
 		return expected == actual
 	}
 
-	exp, ok := expected.([]byte)
-	if !ok {
+	switch exp := expected.(type) {
+	case []byte:
+		act, ok := actual.([]byte)
+		if !ok {
+			return false
+		}
+		if exp == nil || act == nil {
+			return exp == nil && act == nil
+		}
+		return bytes.Equal(exp, act)
+
+	case float32:
+		act, ok := actual.(float32)
+		if !ok {
+			return false
+		}
+
+		if math.IsNaN(float64(exp)) {
+			if math.IsNaN(float64(act)) {
+				return true
+			} else {
+				return false
+			}
+		}
+		if act == exp {
+			return true
+		} else {
+			return false
+		}
+
+	case float64:
+		act, ok := actual.(float64)
+		if !ok {
+			return false
+		}
+
+		if math.IsNaN(exp) {
+			if math.IsNaN(act) {
+				return true
+			} else {
+				return false
+			}
+		}
+		if act == exp {
+			return true
+		} else {
+			return false
+		}
+
+	default:
 		return reflect.DeepEqual(expected, actual)
 	}
-
-	act, ok := actual.([]byte)
-	if !ok {
-		return false
-	}
-	if exp == nil || act == nil {
-		return exp == nil && act == nil
-	}
-	return bytes.Equal(exp, act)
 }
 
 // ObjectsAreEqualValues gets whether two objects are equal, or if their
